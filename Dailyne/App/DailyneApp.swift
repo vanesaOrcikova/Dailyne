@@ -11,11 +11,13 @@ import SwiftUI
 struct DailyneApp: App {
 
     @StateObject private var schoolStore = SchoolStore()
+    @StateObject private var fitnessStore = FitnessStore()
 
     var body: some Scene {
         WindowGroup {
             RootTabView()
                 .environmentObject(schoolStore)
+                .environmentObject(fitnessStore)
         }
     }
 }

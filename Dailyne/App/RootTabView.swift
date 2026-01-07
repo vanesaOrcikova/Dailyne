@@ -19,7 +19,7 @@ struct RootTabView: View {
             Text("Diary")
                 .tabItem { Label("Diary", systemImage: "camera") }
 
-            Text("Fitness")
+            FitnessView()
                 .tabItem { Label("Fitness", systemImage: "heart") }
 
             Text("Board")
