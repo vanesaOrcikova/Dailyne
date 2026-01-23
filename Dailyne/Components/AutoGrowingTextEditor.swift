@@ -14,7 +14,7 @@ struct AutoGrowingTextEditor: View {
 
     // nastaviteľné
     let minLines: Int = 2          // ✅ default 2 riadky
-    let maxLines: Int = 5         // aby nerástlo donekonečna
+    let maxLines: Int = 6         // aby nerástlo donekonečna
 
     // interné
     @State private var height: CGFloat = 0

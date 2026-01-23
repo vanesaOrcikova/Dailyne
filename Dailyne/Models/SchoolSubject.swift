@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct Subject: Identifiable, Codable {
+struct SchoolSubject: Identifiable, Codable {
     let id: UUID
     var name: String
     var tasks: [SchoolTask]

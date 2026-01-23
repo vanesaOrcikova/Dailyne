@@ -14,9 +14,9 @@ struct TasksView: View {
     @State private var isAddSubjectPresented: Bool = false
 
     @State private var isRenamePresented: Bool = false
-    @State private var subjectToRename: Subject? = nil
+    @State private var subjectToRename: SchoolSubject? = nil
 
-    @State private var subjectToDelete: Subject? = nil
+    @State private var subjectToDelete: SchoolSubject? = nil
     @State private var isDeleteAlertPresented: Bool = false
 
     private let columns = [
@@ -105,13 +105,31 @@ struct TasksView: View {
 #Preview {
     let store = SchoolStore()
     store.subjects = [
-        Subject(name: "Mathematics", tasks: [
-            SchoolTask(title: "Homework 1", type: .assignment),
-            SchoolTask(title: "Study lecture notes", type: .study),
-            SchoolTask(title: "Test result", type: .points, pointsEarned: 4, pointsTotal: 30)
+        SchoolSubject(name: "Mathematics", tasks: [
+            SchoolTask(
+                title: "Homework 1",
+                note: "",
+                type: .assignment
+            ),
+            SchoolTask(
+                title: "Study lecture notes",
+                note: "",
+                type: .study
+            ),
+            SchoolTask(
+                title: "Test result",
+                note: "",
+                type: .points,
+                pointsEarned: 4,
+                pointsTotal: 30
+            )
         ]),
-        Subject(name: "Physics", tasks: [
-            SchoolTask(title: "Lab report", type: .assignment)
+        SchoolSubject(name: "Physics", tasks: [
+            SchoolTask(
+                title: "Lab report",
+                note: "",
+                type: .assignment
+            )
         ])
     ]
 

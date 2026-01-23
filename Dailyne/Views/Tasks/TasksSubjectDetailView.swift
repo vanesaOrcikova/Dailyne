@@ -17,7 +17,7 @@ struct TasksSubjectDetailView: View {
     @State private var isEditPresented: Bool = false
     @State private var taskToEdit: SchoolTask? = nil
 
-    var subject: Subject? {
+    var subject: SchoolSubject? {
         schoolStore.subjects.first(where: { $0.id == subjectId })
     }
 

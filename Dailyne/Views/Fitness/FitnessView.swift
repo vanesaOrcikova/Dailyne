@@ -8,10 +8,22 @@
 import SwiftUI
 
 struct FitnessView: View {
+
+    @EnvironmentObject var fitnessStore: FitnessStore
+    @State private var selectedDayIndex: Int? = nil
+
     var body: some View {
         NavigationStack {
-            FitnessDashboardView()
+            FitnessDashboardView(fitnessStore: fitnessStore)
                 .navigationTitle("Fitness")
+        }
+        .onAppear {
+            fitnessStore.updateShouldShowEveningCheckIn()
+        }
+        .sheet(isPresented: $fitnessStore.shouldShowEveningCheckIn) {
+            EveningCheckInView()
+                .environmentObject(fitnessStore)
+                .presentationDetents([.large])
         }
     }
 }

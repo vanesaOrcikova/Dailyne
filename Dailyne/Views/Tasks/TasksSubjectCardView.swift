@@ -9,7 +9,7 @@ import SwiftUI
 
 struct TasksSubjectCardView: View {
 
-    var subject: Subject
+    var subject: SchoolSubject
 
     // ✅ úlohy na kartičke:
     // - bez Points
