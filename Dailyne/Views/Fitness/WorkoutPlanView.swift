@@ -141,16 +141,8 @@ struct WorkoutPlanView: View {
 
             // ✅ Exercise detail sheet (photo)
             .sheet(isPresented: $store.showExerciseDetail) {
-                if let ex = store.selectedExercise() {
-                    ExerciseDetailView(
-                        exerciseName: ex.name,
-                        existingPhotoData: ex.photoData,
-                        onSavePhoto: { data in
-                            store.savePhotoForSelectedExercise(data)
-                        }
-                    )
-                    .presentationDetents([.large])
-                }
+                ExerciseLogSheetView(store: store)
+                    .presentationDetents([.medium, .large])
             }
 
             // ✅ Rename/Add category sheet

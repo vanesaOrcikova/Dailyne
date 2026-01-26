@@ -22,7 +22,16 @@ final class WorkoutPlanStore: ObservableObject {
         var id: UUID = UUID()
         var name: String
         var photoData: Data? = nil
+        var notes: String = ""
+        var sets: [ExerciseSet] = []
     }
+
+    struct ExerciseSet: Identifiable, Codable {
+        var id: UUID = UUID()
+        var weight: String = ""  // napr. "45 kg"
+        var reps: String = ""    // napr. "10"
+    }
+
 
     @Published var days: [Day] = [
         Day(title: "Day 1", exercises: [
@@ -101,5 +110,43 @@ final class WorkoutPlanStore: ObservableObject {
         guard let exIndex = days[dayIndex].exercises.firstIndex(where: { $0.id == exId }) else { return }
 
         days[dayIndex].exercises[exIndex].photoData = data
+    }
+    
+    func addSetToSelectedExercise() {
+        guard let dayId = selectedDayId else { return }
+        guard let exId = selectedExerciseId else { return }
+
+        guard let dayIndex = days.firstIndex(where: { $0.id == dayId }) else { return }
+        guard let exIndex = days[dayIndex].exercises.firstIndex(where: { $0.id == exId }) else { return }
+
+        days[dayIndex].exercises[exIndex].sets.append(ExerciseSet())
+    }
+
+    func updateSet(for exId: UUID, setId: UUID, weight: String, reps: String) {
+        guard let dayId = selectedDayId else { return }
+        guard let dayIndex = days.firstIndex(where: { $0.id == dayId }) else { return }
+        guard let exIndex = days[dayIndex].exercises.firstIndex(where: { $0.id == exId }) else { return }
+
+        guard let sIndex = days[dayIndex].exercises[exIndex].sets.firstIndex(where: { $0.id == setId }) else { return }
+        days[dayIndex].exercises[exIndex].sets[sIndex].weight = weight
+        days[dayIndex].exercises[exIndex].sets[sIndex].reps = reps
+    }
+
+    func deleteSet(for exId: UUID, setId: UUID) {
+        guard let dayId = selectedDayId else { return }
+        guard let dayIndex = days.firstIndex(where: { $0.id == dayId }) else { return }
+        guard let exIndex = days[dayIndex].exercises.firstIndex(where: { $0.id == exId }) else { return }
+
+        days[dayIndex].exercises[exIndex].sets.removeAll { $0.id == setId }
+    }
+
+    func saveNotesForSelectedExercise(_ text: String) {
+        guard let dayId = selectedDayId else { return }
+        guard let exId = selectedExerciseId else { return }
+
+        guard let dayIndex = days.firstIndex(where: { $0.id == dayId }) else { return }
+        guard let exIndex = days[dayIndex].exercises.firstIndex(where: { $0.id == exId }) else { return }
+
+        days[dayIndex].exercises[exIndex].notes = text
     }
 }
