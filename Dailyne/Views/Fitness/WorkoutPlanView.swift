@@ -84,7 +84,7 @@ struct WorkoutPlanView: View {
                                                 Spacer()
 
                                                 // ✅ indikátor že má fotku
-                                                if ex.photoData != nil {
+                                                if ex.photoFilename != nil {
                                                     Image(systemName: "photo")
                                                         .font(.system(size: 13, weight: .semibold))
                                                         .foregroundStyle(Color.black.opacity(0.35))

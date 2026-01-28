@@ -6,147 +6,196 @@
 //
 
 import Foundation
-import SwiftUI
+import UIKit
 import Combine
 
-@MainActor
 final class WorkoutPlanStore: ObservableObject {
 
-    struct Day: Identifiable, Codable {
-        var id: UUID = UUID()
-        var title: String
-        var exercises: [Exercise]
+    @Published var days: [WorkoutDay] = [] {
+        didSet { saveToDisk() }
     }
-
-    struct Exercise: Identifiable, Codable {
-        var id: UUID = UUID()
-        var name: String
-        var photoData: Data? = nil
-        var notes: String = ""
-        var sets: [ExerciseSet] = []
-    }
-
-    struct ExerciseSet: Identifiable, Codable {
-        var id: UUID = UUID()
-        var weight: String = ""  // napr. "45 kg"
-        var reps: String = ""    // napr. "10"
-    }
-
-
-    @Published var days: [Day] = [
-        Day(title: "Day 1", exercises: [
-            Exercise(name: "Squat"),
-            Exercise(name: "Hip Thrust"),
-            Exercise(name: "Lat Pulldown")
-        ])
-    ]
 
     @Published var selectedDayId: UUID?
-    @Published var showAddExercise: Bool = false
+    @Published var selectedExerciseId: UUID?
 
+    // ✅ na sheets vo WorkoutPlanView
+    @Published var showAddExercise: Bool = false
     @Published var showExerciseDetail: Bool = false
-    @Published var selectedExerciseId: UUID? = nil
 
     init() {
+        loadFromDisk()
+
+        if days.isEmpty {
+            days = [
+                WorkoutDay(
+                    title: "Day 1",
+                    exercises: [
+                        WorkoutExercise(name: "Squat"),
+                        WorkoutExercise(name: "Hip Thrust"),
+                        WorkoutExercise(name: "Lat Pulldown")
+                    ]
+                )
+            ]
+        }
+
         selectedDayId = days.first?.id
     }
 
-    var selectedDay: Day? {
+    // MARK: - Selected day
+
+    var selectedDay: WorkoutDay? {
         guard let id = selectedDayId else { return nil }
         return days.first(where: { $0.id == id })
     }
 
-    // ✅ pridá kategóriu a vráti jej id (aby sme ju hneď vedeli pomenovať)
+    // MARK: - Paths
+
+    private var appDir: URL {
+        let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        return dir
+    }
+
+    private var storeURL: URL {
+        appDir.appendingPathComponent("workout_store.json")
+    }
+
+    private var photosDir: URL {
+        let p = appDir.appendingPathComponent("ExercisePhotos", isDirectory: true)
+        try? FileManager.default.createDirectory(at: p, withIntermediateDirectories: true)
+        return p
+    }
+
+    // MARK: - Save / Load
+
+    private func saveToDisk() {
+        do {
+            let data = try JSONEncoder().encode(days)
+            try data.write(to: storeURL, options: [.atomic])
+        } catch {
+            print("❌ Save failed:", error)
+        }
+    }
+
+    private func loadFromDisk() {
+        guard FileManager.default.fileExists(atPath: storeURL.path) else { return }
+        do {
+            let data = try Data(contentsOf: storeURL)
+            days = try JSONDecoder().decode([WorkoutDay].self, from: data)
+        } catch {
+            print("❌ Load failed:", error)
+        }
+    }
+
+    // MARK: - Day actions
+
     func addDayAndReturnId() -> UUID {
-        let new = Day(title: "New", exercises: [])
+        let new = WorkoutDay(title: "New")
         days.append(new)
         selectedDayId = new.id
         return new.id
     }
 
-    func renameDay(id: UUID, to newTitle: String) {
-        if let index = days.firstIndex(where: { $0.id == id }) {
-            days[index].title = newTitle
-        }
-    }
-
-    func deleteDay(_ day: Day) {
-        if days.count <= 1 { return } // necháme aspoň 1 kategóriu
-
-        let wasSelected = (selectedDayId == day.id)
+    func deleteDay(_ day: WorkoutDay) {
         days.removeAll { $0.id == day.id }
-
-        if wasSelected {
+        if selectedDayId == day.id {
             selectedDayId = days.first?.id
         }
     }
 
-    func addExercise(name: String) {
-        guard let id = selectedDayId else { return }
-        guard let dayIndex = days.firstIndex(where: { $0.id == id }) else { return }
-
-        let ex = Exercise(name: name)
-        days[dayIndex].exercises.append(ex)
+    func renameDay(id: UUID, to newTitle: String) {
+        if let i = days.firstIndex(where: { $0.id == id }) {
+            days[i].title = newTitle
+        }
     }
 
-    // MARK: - Exercise detail
+    // MARK: - Exercise actions
 
-    func openExercise(_ ex: Exercise) {
+    func addExercise(name: String) {
+        guard let dId = selectedDayId else { return }
+        guard let dIndex = days.firstIndex(where: { $0.id == dId }) else { return }
+
+        let ex = WorkoutExercise(name: name)
+        days[dIndex].exercises.append(ex)
+    }
+
+    func openExercise(_ ex: WorkoutExercise) {
         selectedExerciseId = ex.id
         showExerciseDetail = true
     }
 
-    func selectedExercise() -> Exercise? {
-        guard let day = selectedDay else { return nil }
-        guard let id = selectedExerciseId else { return nil }
-        return day.exercises.first(where: { $0.id == id })
+    func selectedExercise() -> WorkoutExercise? {
+        guard let dId = selectedDayId,
+              let eId = selectedExerciseId,
+              let dIndex = days.firstIndex(where: { $0.id == dId }) else { return nil }
+
+        return days[dIndex].exercises.first(where: { $0.id == eId })
     }
 
-    func savePhotoForSelectedExercise(_ data: Data?) {
-        guard let dayId = selectedDayId else { return }
-        guard let exId = selectedExerciseId else { return }
-
-        guard let dayIndex = days.firstIndex(where: { $0.id == dayId }) else { return }
-        guard let exIndex = days[dayIndex].exercises.firstIndex(where: { $0.id == exId }) else { return }
-
-        days[dayIndex].exercises[exIndex].photoData = data
-    }
-    
-    func addSetToSelectedExercise() {
-        guard let dayId = selectedDayId else { return }
-        guard let exId = selectedExerciseId else { return }
-
-        guard let dayIndex = days.firstIndex(where: { $0.id == dayId }) else { return }
-        guard let exIndex = days[dayIndex].exercises.firstIndex(where: { $0.id == exId }) else { return }
-
-        days[dayIndex].exercises[exIndex].sets.append(ExerciseSet())
+    private func updateExercise(_ exId: UUID, in dayId: UUID, _ update: (inout WorkoutExercise) -> Void) {
+        guard let dIndex = days.firstIndex(where: { $0.id == dayId }) else { return }
+        guard let eIndex = days[dIndex].exercises.firstIndex(where: { $0.id == exId }) else { return }
+        update(&days[dIndex].exercises[eIndex])
     }
 
-    func updateSet(for exId: UUID, setId: UUID, weight: String, reps: String) {
-        guard let dayId = selectedDayId else { return }
-        guard let dayIndex = days.firstIndex(where: { $0.id == dayId }) else { return }
-        guard let exIndex = days[dayIndex].exercises.firstIndex(where: { $0.id == exId }) else { return }
-
-        guard let sIndex = days[dayIndex].exercises[exIndex].sets.firstIndex(where: { $0.id == setId }) else { return }
-        days[dayIndex].exercises[exIndex].sets[sIndex].weight = weight
-        days[dayIndex].exercises[exIndex].sets[sIndex].reps = reps
-    }
-
-    func deleteSet(for exId: UUID, setId: UUID) {
-        guard let dayId = selectedDayId else { return }
-        guard let dayIndex = days.firstIndex(where: { $0.id == dayId }) else { return }
-        guard let exIndex = days[dayIndex].exercises.firstIndex(where: { $0.id == exId }) else { return }
-
-        days[dayIndex].exercises[exIndex].sets.removeAll { $0.id == setId }
-    }
+    // MARK: - Notes
 
     func saveNotesForSelectedExercise(_ text: String) {
-        guard let dayId = selectedDayId else { return }
-        guard let exId = selectedExerciseId else { return }
+        guard let dId = selectedDayId, let eId = selectedExerciseId else { return }
+        updateExercise(eId, in: dId) { ex in
+            ex.notes = text
+        }
+    }
 
-        guard let dayIndex = days.firstIndex(where: { $0.id == dayId }) else { return }
-        guard let exIndex = days[dayIndex].exercises.firstIndex(where: { $0.id == exId }) else { return }
+    // MARK: - Sets
 
-        days[dayIndex].exercises[exIndex].notes = text
+    func addSetToSelectedExercise() {
+        guard let dId = selectedDayId, let eId = selectedExerciseId else { return }
+        updateExercise(eId, in: dId) { ex in
+            ex.sets.append(WorkoutSet(weight: "", reps: ""))
+        }
+    }
+
+    func updateSet(for exerciseId: UUID, setId: UUID, weight: String, reps: String) {
+        guard let dId = selectedDayId else { return }
+        updateExercise(exerciseId, in: dId) { ex in
+            if let i = ex.sets.firstIndex(where: { $0.id == setId }) {
+                ex.sets[i].weight = weight
+                ex.sets[i].reps = reps
+            }
+        }
+    }
+
+    func deleteSet(for exerciseId: UUID, setId: UUID) {
+        guard let dId = selectedDayId else { return }
+        updateExercise(exerciseId, in: dId) { ex in
+            ex.sets.removeAll { $0.id == setId }
+        }
+    }
+
+    // MARK: - Photos
+
+    func savePhotoForSelectedExercise(_ data: Data) {
+        guard let dId = selectedDayId, let eId = selectedExerciseId else { return }
+
+        let filename = "exercise_\(eId.uuidString).jpg"
+        let url = photosDir.appendingPathComponent(filename)
+
+        do {
+            try data.write(to: url, options: [.atomic])
+            updateExercise(eId, in: dId) { ex in
+                ex.photoFilename = filename
+            }
+        } catch {
+            print("❌ Photo save failed:", error)
+        }
+    }
+
+    func loadPhoto(for ex: WorkoutExercise) -> UIImage? {
+        guard let name = ex.photoFilename else { return nil }
+        let url = photosDir.appendingPathComponent(name)
+        guard let data = try? Data(contentsOf: url) else { return nil }
+        return UIImage(data: data)
     }
 }
+

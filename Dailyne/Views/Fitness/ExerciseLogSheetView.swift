@@ -52,13 +52,12 @@ struct ExerciseLogSheetView: View {
                                 sectionTitle("Photo")
 
                                 PhotosPicker(selection: $pickerItem, matching: .images) {
-                                    if let data = ex?.photoData,
-                                       let img = UIImage(data: data) {
+                                    if let ex = ex,
+                                       let img = store.loadPhoto(for: ex) {
 
                                         let isPortrait = img.size.height > img.size.width
 
                                         if isPortrait {
-                                            // ✅ portrait: celý kontajner je zaoblený
                                             ZStack {
                                                 RoundedRectangle(cornerRadius: 18)
                                                     .fill(Color.white.opacity(0.35))
@@ -66,7 +65,7 @@ struct ExerciseLogSheetView: View {
                                                 Image(uiImage: img)
                                                     .resizable()
                                                     .scaledToFit()
-                                                    .padding(10) // ✅ menší
+                                                    .padding(10)
                                             }
                                             .frame(maxWidth: .infinity)
                                             .frame(height: 300)
@@ -77,7 +76,6 @@ struct ExerciseLogSheetView: View {
                                             )
 
                                         } else {
-                                            // ✅ landscape: vyplní kartu
                                             Image(uiImage: img)
                                                 .resizable()
                                                 .scaledToFill()

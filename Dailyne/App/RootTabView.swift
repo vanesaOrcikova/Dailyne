@@ -22,7 +22,7 @@ struct RootTabView: View {
             FitnessView()
                 .tabItem { Label("Fitness", systemImage: "heart") }
 
-            Text("Board")
+            VisionBoardView()
                 .tabItem { Label("Board", systemImage: "square.grid.2x2") }
         }
         .tint(Color(red: 0.86, green: 0.36, blue: 0.45))

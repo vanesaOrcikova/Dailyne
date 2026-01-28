@@ -2,63 +2,63 @@
 //  WorkoutDayTabsView.swift
 //  Dailyne
 //
-//  Created by Vanesa Orcikova on 23/01/2026.
+//  Created by Vanesa Orcikova on 28/01/2026.
 //
 
 import SwiftUI
 
 struct WorkoutDayTabsView: View {
-
-    let days: [WorkoutPlanStore.Day]
+    let days: [WorkoutDay]
     @Binding var selectedId: UUID?
 
     let onAddDay: () -> Void
-    let onRenameDay: (WorkoutPlanStore.Day) -> Void
-    let onDeleteDay: (WorkoutPlanStore.Day) -> Void
-    let onSelectDay: (WorkoutPlanStore.Day) -> Void
+    let onRenameDay: (WorkoutDay) -> Void
+    let onDeleteDay: (WorkoutDay) -> Void
+    let onSelectDay: (WorkoutDay) -> Void
 
     var body: some View {
-        SoftCard {
+        ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 10) {
 
-                // ✅ iba plus v prvom “ramiku”
                 Button {
                     onAddDay()
                 } label: {
-                    Text("+")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(Color.black.opacity(0.75))
-                        .frame(width: 44, height: 34)
-                        .background(Color.black.opacity(0.04))
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                    Image(systemName: "plus")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(Color.black.opacity(0.55))
+                        .frame(width: 34, height: 28)
+                        .background(Color.white.opacity(0.7))
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
                 }
                 .buttonStyle(.plain)
 
-                // kategórie
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 10) {
-                        ForEach(days) { day in
-                            Button {
-                                onSelectDay(day)
-                            } label: {
-                                Text(day.title)
-                                    .font(.system(size: 13, weight: .semibold))
-                                    .foregroundStyle(Color.black.opacity(selectedId == day.id ? 0.85 : 0.55))
-                                    .padding(.vertical, 8)
-                                    .padding(.horizontal, 12)
-                                    .background(Color.black.opacity(selectedId == day.id ? 0.08 : 0.04))
-                                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                            }
-                            .buttonStyle(.plain)
-                            .contextMenu {
-                                Button("Rename") { onRenameDay(day) }
-                                Button("Delete", role: .destructive) { onDeleteDay(day) }
-                            }
+                ForEach(days) { day in
+                    let isSelected = (selectedId == day.id)
+
+                    Button {
+                        selectedId = day.id
+                        onSelectDay(day)
+                    } label: {
+                        Text(day.title)
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(Color.black.opacity(isSelected ? 0.85 : 0.55))
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(Color.white.opacity(isSelected ? 0.85 : 0.60))
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                    }
+                    .buttonStyle(.plain)
+                    .contextMenu {
+                        Button("Rename") { onRenameDay(day) }
+                        Button(role: .destructive) {
+                            onDeleteDay(day)
+                        } label: {
+                            Text("Delete")
                         }
                     }
-                    .padding(.vertical, 4)
                 }
             }
+            .padding(.horizontal, 16)
         }
     }
 }
