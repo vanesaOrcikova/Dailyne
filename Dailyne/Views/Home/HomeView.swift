@@ -84,8 +84,10 @@ struct HomeView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 20))
 
                         // 🌱 Grow a Thought widget (NOVÉ)
-                        GrowThoughtWidgetCard(store: growStore) {
-                            showGrowDetail = true
+                        GrowThoughtWidgetCard(store: growStore) { showGrowDetail = true }
+                        .sheet(isPresented: $showGrowDetail) {
+                            GrowThoughtDetailView(store: growStore)
+                                .presentationDetents([.medium, .large])
                         }
 
                         Spacer(minLength: 30)

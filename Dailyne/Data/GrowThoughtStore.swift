@@ -14,22 +14,22 @@ final class GrowThoughtStore: ObservableObject {
         didSet { save() }
     }
 
-    private let storageKey = "grow_thought_state_v1"
+    // ✅ bump key to avoid decode problems with older stored versions
+    private let storageKey = "grow_thought_state_v3"
 
     init() {
         let today = Self.dayKey(Date())
 
         if let loaded = Self.load(storageKey: storageKey) {
-            // ak je nový deň -> reset denné veci, ale nechaj intention/progress
             if loaded.dayKey != today {
                 state = Self.resetForNewDay(from: loaded, todayKey: today)
             } else {
                 state = loaded
             }
         } else {
-            // prvýkrát
             state = GrowThoughtState(
                 dayKey: today,
+                flower: nil,
                 intention: "Peace",
                 points: 0,
                 stage: .seed,
@@ -38,13 +38,29 @@ final class GrowThoughtStore: ObservableObject {
                 didWeeds: false,
                 waterNote: "",
                 weedsNote: "",
-                todayNeed: .water
+                waterTrait: "",
+                sunTrait: "",
+                weedsTrait: "",
+                todayNeed: .water,
+                weedsAppearToday: true // prvý deň nech to vidíš
             )
             save()
         }
     }
 
-    // MARK: - Public API
+    // MARK: - Onboarding
+
+    var needsOnboarding: Bool {
+        state.flower == nil
+    }
+
+    func pickFlower(_ flower: FlowerType, intention: String) {
+        state.flower = flower
+        let t = intention.trimmingCharacters(in: .whitespacesAndNewlines)
+        state.intention = t.isEmpty ? "Peace" : t
+    }
+
+    // MARK: - Daily logic
 
     func ensureToday() {
         let today = Self.dayKey(Date())
@@ -53,16 +69,11 @@ final class GrowThoughtStore: ObservableObject {
         }
     }
 
-    func setIntention(_ text: String) {
-        let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !t.isEmpty else { return }
-        state.intention = t
-    }
-
     func water(note: String) {
         guard !state.didWater else { return }
         state.didWater = true
         state.waterNote = note.trimmingCharacters(in: .whitespacesAndNewlines)
+        state.waterTrait = Self.pickTrait(for: .water, intention: state.intention)
         addPoints(2)
         refreshNeed()
     }
@@ -70,6 +81,7 @@ final class GrowThoughtStore: ObservableObject {
     func sun() {
         guard !state.didSun else { return }
         state.didSun = true
+        state.sunTrait = Self.pickTrait(for: .sun, intention: state.intention)
         addPoints(1)
         refreshNeed()
     }
@@ -78,15 +90,16 @@ final class GrowThoughtStore: ObservableObject {
         guard !state.didWeeds else { return }
         state.didWeeds = true
         state.weedsNote = note.trimmingCharacters(in: .whitespacesAndNewlines)
+        state.weedsTrait = Self.pickTrait(for: .weeds, intention: state.intention)
         addPoints(2)
         refreshNeed()
     }
 
     func completionText() -> String {
         let done = [state.didWater, state.didSun, state.didWeeds].filter { $0 }.count
-        if done == 0 { return "Just a tiny step today." }
-        if done == 1 { return "Nice. Keep it gentle." }
-        if done == 2 { return "You’re taking care of you." }
+        if done == 0 { return "Your plant is waiting gently." }
+        if done == 1 { return "Nice. Tiny care counts." }
+        if done == 2 { return "You’re doing so well." }
         return "Your plant feels loved ✨"
     }
 
@@ -98,10 +111,14 @@ final class GrowThoughtStore: ObservableObject {
     }
 
     private func refreshNeed() {
-        // jednoduchá logika: čo ešte chýba dnes
         if !state.didWater { state.todayNeed = .water; return }
         if !state.didSun { state.todayNeed = .sun; return }
-        if !state.didWeeds { state.todayNeed = .weeds; return }
+
+        // ✅ weeds len ak dnes vyrastú
+        if state.weedsAppearToday {
+            if !state.didWeeds { state.todayNeed = .weeds; return }
+        }
+
         state.todayNeed = .none
     }
 
@@ -124,14 +141,28 @@ final class GrowThoughtStore: ObservableObject {
     private static func resetForNewDay(from old: GrowThoughtState, todayKey: String) -> GrowThoughtState {
         var s = old
         s.dayKey = todayKey
+
         s.didWater = false
         s.didSun = false
         s.didWeeds = false
+
         s.waterNote = ""
         s.weedsNote = ""
-        // každý deň môže začať inou potrebou (aby to bolo živé)
-        let needs: [PlantNeed] = [.water, .sun, .weeds]
+
+        s.waterTrait = ""
+        s.sunTrait = ""
+        s.weedsTrait = ""
+
+        // ✅ burina len občas (35%)
+        s.weedsAppearToday = (Int.random(in: 0...99) < 35)
+
+        // vyber dnešnú potrebu
+        var needs: [PlantNeed] = [.water, .sun]
+        if s.weedsAppearToday {
+            needs.append(.weeds)
+        }
         s.todayNeed = needs.randomElement() ?? .water
+
         return s
     }
 
@@ -151,5 +182,26 @@ final class GrowThoughtStore: ObservableObject {
         f.calendar = Calendar.current
         f.dateFormat = "yyyy-MM-dd"
         return f.string(from: date)
+    }
+
+    private static func pickTrait(for need: PlantNeed, intention: String) -> String {
+        let water = ["patience", "self-trust", "gentleness", "stability", "consistency"]
+        let sun = ["confidence", "clarity", "energy", "courage", "lightness"]
+        let weeds = ["boundaries", "letting go", "calm", "focus", "self-respect"]
+
+        let pick: String
+        switch need {
+        case .water: pick = water.randomElement() ?? "patience"
+        case .sun: pick = sun.randomElement() ?? "confidence"
+        case .weeds: pick = weeds.randomElement() ?? "letting go"
+        case .none: pick = "peace"
+        }
+
+        let t = intention.trimmingCharacters(in: .whitespacesAndNewlines)
+        if t.isEmpty {
+            return "You’re growing \(pick)."
+        } else {
+            return "You’re growing \(pick) for \(t.lowercased())."
+        }
     }
 }

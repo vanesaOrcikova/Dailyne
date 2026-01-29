@@ -22,26 +22,61 @@ enum PlantStage: Int, Codable, CaseIterable {
     case bloom
 }
 
+enum FlowerType: String, Codable, CaseIterable, Identifiable {
+    case daisy, tulip, rose, lavender, sunflower, cactus
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .daisy: return "Daisy"
+        case .tulip: return "Tulip"
+        case .rose: return "Rose"
+        case .lavender: return "Lavender"
+        case .sunflower: return "Sunflower"
+        case .cactus: return "Cactus"
+        }
+    }
+
+    var emoji: String {
+        switch self {
+        case .daisy: return "🌼"
+        case .tulip: return "🌷"
+        case .rose: return "🌹"
+        case .lavender: return "🪻"
+        case .sunflower: return "🌻"
+        case .cactus: return "🌵"
+        }
+    }
+}
+
 struct GrowThoughtState: Codable {
-    // deň (aby sa to resetovalo každý deň)
     var dayKey: String
 
-    // čo pestujem
-    var intention: String // napr. "Confidence", "Peace", "Discipline"
+    // onboarding
+    var flower: FlowerType?
+    var intention: String
 
-    // progres
+    // progress
     var points: Int
     var stage: PlantStage
 
-    // dnešné akcie
+    // daily actions
     var didWater: Bool
     var didSun: Bool
     var didWeeds: Bool
 
-    // dnešné mini zápisky
+    // daily notes
     var waterNote: String
     var weedsNote: String
 
-    // posledná potreba (čo sa má ukazovať na karte)
+    // daily traits (text after action)
+    var waterTrait: String
+    var sunTrait: String
+    var weedsTrait: String
+
+    // UI hint
     var todayNeed: PlantNeed
+
+    // ✅ NEW: weeds appear only sometimes
+    var weedsAppearToday: Bool
 }
