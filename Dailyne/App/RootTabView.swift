@@ -16,7 +16,7 @@ struct RootTabView: View {
             TasksView()
                 .tabItem { Label("Tasks", systemImage: "list.bullet") }
 
-            Text("Diary")
+            DiaryView()
                 .tabItem { Label("Diary", systemImage: "camera") }
 
             FitnessView()

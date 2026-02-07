@@ -129,24 +129,6 @@ struct FitnessDashboardView: View {
     }
 }
 
-// MARK: - Small reusable card
-
-//private struct SoftCard<Content: View>: View {
-//    let content: Content
-//
-//    init(@ViewBuilder content: () -> Content) {
-//        self.content = content()
-//    }
-//
-//    var body: some View {
-//        content
-//            .padding(16)
-//            .frame(maxWidth: .infinity, alignment: .leading)
-//            .background(Color.white.opacity(0.7))
-//            .clipShape(RoundedRectangle(cornerRadius: 20))
-//    }
-//}
-
 // MARK: - Week row
 
 private struct WeekProgressRow: View {
