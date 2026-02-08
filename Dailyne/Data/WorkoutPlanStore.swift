@@ -18,7 +18,6 @@ final class WorkoutPlanStore: ObservableObject {
     @Published var selectedDayId: UUID?
     @Published var selectedExerciseId: UUID?
 
-    // ✅ na sheets vo WorkoutPlanView
     @Published var showAddExercise: Bool = false
     @Published var showExerciseDetail: Bool = false
 

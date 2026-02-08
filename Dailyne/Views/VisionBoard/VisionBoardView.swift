@@ -95,7 +95,7 @@ struct VisionBoardView: View {
 
             Spacer()
 
-            // ✅ malé pridanie fotky (nekazí grid)
+            //  malé pridanie fotky (nekazí grid)
             PhotosPicker(selection: $pickerItem, matching: .images) {
                 Image(systemName: "photo.badge.plus")
                     .font(.system(size: 16, weight: .semibold))
@@ -106,7 +106,7 @@ struct VisionBoardView: View {
             }
             .buttonStyle(.plain)
 
-            // ✅ pridanie kategórie
+            // pridanie kategórie
             Button {
                 newCategoryText = ""
                 showAddCategory = true
